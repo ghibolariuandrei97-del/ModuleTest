@@ -1,0 +1,47 @@
+name: build
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install 32-bit toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-multilib g++-multilib
+      - name: Fetch SDKs
+        shell: bash
+        run: |
+          git clone --depth 1 https://github.com/alliedmodders/amxmodx.git deps/amxmodx
+          git clone --depth 1 https://github.com/alliedmodders/hlsdk.git deps/hlsdk
+          git clone --depth 1 https://github.com/alliedmodders/metamod-hl1.git deps/metamod-hl1
+          mkdir -p sdk
+          cp -r deps/amxmodx/public/sdk/. sdk/
+          cp moduleconfig.h sdk/moduleconfig.h
+      - name: Build
+        run: make
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mymodule-linux
+          path: mymodule_amxx_i386.so
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch SDKs
+        shell: bash
+        run: |
+          git clone --depth 1 https://github.com/alliedmodders/amxmodx.git deps/amxmodx
+          git clone --depth 1 https://github.com/alliedmodders/hlsdk.git deps/hlsdk
+          git clone --depth 1 https://github.com/alliedmodders/metamod-hl1.git deps/metamod-hl1
+          mkdir -p sdk
+          cp -r deps/amxmodx/public/sdk/. sdk/
+          cp moduleconfig.h sdk/moduleconfig.h
+      - name: Build
+        run: |
+          cmake -A Win32 -B build
+          cmake --build build --config Release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mymodule-windows
+          path: build/Release/mymodule_amxx.dll
