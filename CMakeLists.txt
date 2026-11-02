@@ -17,7 +17,7 @@ target_include_directories(mymodule PRIVATE
   deps/hlsdk/public
   deps/metamod-hl1/metamod)
 
-target_compile_definitions(mymodule PRIVATE WIN32 _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
+target_compile_definitions(mymodule PRIVATE WIN32 HAVE_STDINT_H _CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
 target_compile_options(mymodule PRIVATE /W0)
 
 set_target_properties(mymodule PROPERTIES PREFIX "" OUTPUT_NAME "mymodule_amxx")
