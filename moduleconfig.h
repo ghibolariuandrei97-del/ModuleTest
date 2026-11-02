@@ -8,6 +8,7 @@
 #define MODULE_LOGTAG "MYMODULE"
 #define MODULE_LIBRARY "mymodule"
 #define MODULE_LIBCLASS ""
+#define MODULE_DATE __DATE__
 
 #define USE_METAMOD
 
