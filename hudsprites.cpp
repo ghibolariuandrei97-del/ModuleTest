@@ -1,9 +1,14 @@
 // HudSprites - screen-space sprites for AMXX (GoldSrc), no precache-position limits.
 // Method: one sprite entity per element, projected in front of the owner's eyes
 // inside AddToFullPack_Post, and hidden from everybody else.
-//
+
 #include "amxxmodule.h"
 #include "entity_state.h"
+
+#ifdef _MSC_VER
+#pragma comment(linker, "/EXPORT:GiveFnptrsToDll=_GiveFnptrsToDll@8")
+#endif
+
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
