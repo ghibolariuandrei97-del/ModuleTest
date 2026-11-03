@@ -32,6 +32,7 @@ struct Elem
 static SprInfo g_spr[MAX_SPR];
 static int     g_sprCount = 0;
 static Elem    g_el[MAX_ELEM];
+static bool    g_precacheOpen = true;   // true doar cat timp harta se incarca
 
 static Elem *Resolve(cell h)
 {
@@ -55,33 +56,88 @@ static void ApplyRender(Elem &e)
 	e.ent->v.rendercolor = Vector((float)e.r, (float)e.g, (float)e.b);
 }
 
+static const char *PlName(AMX *amx)
+{
+	int i = MF_FindScriptByAmx(amx);
+	const char *n = (i >= 0) ? MF_GetScriptName(i) : NULL;
+	return n ? n : "unknown";
+}
+
+static cell PrecacheFail(AMX *amx, const char *name, const char *why)
+{
+	MF_Log("[HudSprites] hs_precache(\"%s\") failed in %s: %s", name, PlName(amx), why);
+	return -1;
+}
+
 // ---------------------------------------------------------------- natives
 
-// hs_precache(const name[]) -> sprite id or -1. Call from plugin_precache().
+// hs_precache(const name[]) -> sprite id sau -1. Apel doar din plugin_precache().
 static cell AMX_NATIVE_CALL hs_precache(AMX *amx, cell *p)
 {
 	int len;
-	char *name = MF_GetAmxString(amx, p[1], 0, &len);
+	char *in = MF_GetAmxString(amx, p[1], 0, &len);
+
+	char name[80];
+	if (len <= 0)
+		return PrecacheFail(amx, "", "empty sprite name");
+	if (len >= (int)sizeof(name))
+		return PrecacheFail(amx, "...", "sprite name too long");
+	strncpy(name, in, sizeof(name) - 1);
+	name[sizeof(name) - 1] = 0;
+
+	// accepta "x", "x.spr" si "sprites/x.spr"
+	if (!strncmp(name, "sprites/", 8)) memmove(name, name + 8, strlen(name + 8) + 1);
+	size_t l = strlen(name);
+	if (l > 4 && !strcmp(name + l - 4, ".spr")) name[l - 4] = 0;
+
+	if (!name[0] || strstr(name, "..") || strchr(name, ':'))
+		return PrecacheFail(amx, name, "invalid sprite name");
+
 	char path[96];
 	snprintf(path, sizeof(path), "sprites/%s.spr", name);
 
+	// deja precache-uit -> intoarce acelasi id
 	for (int i = 0; i < g_sprCount; i++)
 		if (!strcmp(g_spr[i].path, path)) return i;
-	if (g_sprCount >= MAX_SPR) return -1;
+
+	if (!g_precacheOpen)
+		return PrecacheFail(amx, name, "called too late, use it only inside plugin_precache()");
+
+	if (g_sprCount >= MAX_SPR)
+		return PrecacheFail(amx, name, "sprite limit reached");
 
 	int flen = 0;
 	byte *f = LOAD_FILE_FOR_ME(path, &flen);
-	if (!f) return -1;
-	bool ok = flen >= 36 && !memcmp(f, "IDSP", 4);
-	int frames = ok ? *(int *)(f + 32) : 1;
+	if (!f)
+	{
+		char why[160];
+		snprintf(why, sizeof(why), "file %s not found (put it in cstrike/sprites, check the name)", path);
+		return PrecacheFail(amx, name, why);
+	}
+
+	bool magic = flen >= 36 && !memcmp(f, "IDSP", 4);
+	int version = magic ? *(int *)(f + 4) : 0;
+	int frames  = magic ? *(int *)(f + 32) : 0;
 	FREE_FILE(f);
-	if (!ok) return -1;
+
+	if (!magic)
+		return PrecacheFail(amx, name, "not a valid .spr file (bad header or file too small)");
+	if (version != 2)
+	{
+		char why[96];
+		snprintf(why, sizeof(why), "unsupported sprite version %d (need 2)", version);
+		return PrecacheFail(amx, name, why);
+	}
+	if (frames < 1)
+		return PrecacheFail(amx, name, "sprite has no frames");
 
 	SprInfo &s = g_spr[g_sprCount];
 	strncpy(s.path, path, sizeof(s.path) - 1);
 	s.path[sizeof(s.path) - 1] = 0;
-	s.model  = PRECACHE_MODEL(s.path);
-	s.frames = frames > 0 ? frames : 1;
+	s.model = PRECACHE_MODEL(s.path);
+	if (!s.model)
+		return PrecacheFail(amx, name, "the engine refused to precache the model");
+	s.frames = frames;
 	return g_sprCount++;
 }
 
@@ -90,7 +146,13 @@ static cell AMX_NATIVE_CALL hs_create(AMX *amx, cell *p)
 {
 	int id = p[1], spr = p[2];
 	if (id < 1 || id > gpGlobals->maxClients) { MF_LogError(amx, AMX_ERR_NATIVE, "Invalid player %d", id); return 0; }
-	if (spr < 0 || spr >= g_sprCount)         { MF_LogError(amx, AMX_ERR_NATIVE, "Invalid sprite %d", spr); return 0; }
+
+	if (spr == -1) return 0;   // precache a esuat, motivul e deja in log
+	if (spr < 0 || spr >= g_sprCount)
+	{
+		MF_Log("[HudSprites] hs_create: invalid sprite id %d in %s", spr, PlName(amx));
+		return 0;
+	}
 
 	int i = 0;
 	while (i < MAX_ELEM && g_el[i].used) i++;
@@ -187,8 +249,15 @@ void OnAmxxDetach() {}
 
 void ServerDeactivate()
 {
+	g_precacheOpen = true;           // harta urmatoare isi face precache din nou
 	memset(g_el, 0, sizeof(g_el));   // map change wipes all edicts
 	g_sprCount = 0;                  // plugins re-precache every map
+	RETURN_META(MRES_IGNORED);
+}
+
+void ServerActivate_Post(edict_t *pEdictList, int edictCount, int clientMax)
+{
+	g_precacheOpen = false;          // de aici nu se mai poate face precache
 	RETURN_META(MRES_IGNORED);
 }
 
