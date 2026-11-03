@@ -1,6 +1,6 @@
 .RECIPEPREFIX = >
 CXX ?= g++
-OUT = mymodule_amxx_i386.so
+OUT = hudsprites_amxx_i386.so
 INC = -Isdk \
  -Ideps/amxmodx/public -Ideps/amxmodx/public/amtl \
  -Ideps/hlsdk/common -Ideps/hlsdk/dlls -Ideps/hlsdk/engine \
