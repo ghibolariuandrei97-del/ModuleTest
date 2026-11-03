@@ -21,8 +21,9 @@ jobs:
         run: make
       - uses: actions/upload-artifact@v4
         with:
-          name: mymodule-linux
-          path: mymodule_amxx_i386.so
+          name: hudsprites-linux
+          path: hudsprites_amxx_i386.so
+          if-no-files-found: error
 
   windows:
     runs-on: windows-latest
@@ -43,5 +44,6 @@ jobs:
           cmake --build build --config Release
       - uses: actions/upload-artifact@v4
         with:
-          name: mymodule-windows
-          path: build/Release/mymodule_amxx.dll
+          name: hudsprites-windows
+          path: build/Release/hudsprites_amxx.dll
+          if-no-files-found: error
