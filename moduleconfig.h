@@ -22,6 +22,7 @@ struct entity_state_s;
 // Prototipuri
 void OnAmxxAttach();
 void OnAmxxDetach();
+void ServerActivate_Post(edict_t *pEdictList, int edictCount, int clientMax);
 void ServerDeactivate();
 void StartFrame();
 void ClientDisconnect(edict_t *pEntity);
@@ -30,6 +31,7 @@ int AddToFullPack_Post(struct entity_state_s *state, int e, edict_t *ent,
                        unsigned char *pSet);
 
 // Hook-uri
+#define FN_ServerActivate_Post ServerActivate_Post
 #define FN_AMXX_ATTACH        OnAmxxAttach
 #define FN_AMXX_DETACH        OnAmxxDetach
 #define FN_ServerDeactivate   ServerDeactivate
