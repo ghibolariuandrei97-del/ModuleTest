@@ -176,6 +176,7 @@ static AMX_NATIVE_INFO g_natives[] =
 };
 
 void OnAmxxAttach() { MF_AddNatives(g_natives); }
+void OnAmxxDetach() {}
 
 // ---------------------------------------------------------------- hooks
 
