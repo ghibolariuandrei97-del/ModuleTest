@@ -3,6 +3,7 @@
 // inside AddToFullPack_Post, and hidden from everybody else.
 //
 #include "amxxmodule.h"
+#include "entity_state.h"
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
