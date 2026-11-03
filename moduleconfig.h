@@ -1,6 +1,7 @@
 #ifndef __MODULECONFIG_H__
 #define __MODULECONFIG_H__
 
+// Informatii modul
 #define MODULE_NAME "Hudsprites"
 #define MODULE_VERSION "1.0"
 #define MODULE_AUTHOR "Craxor"
@@ -10,9 +11,15 @@
 #define MODULE_LIBCLASS ""
 #define MODULE_DATE __DATE__
 
+// Folosim Metamod
 #define USE_METAMOD
 
-// prototypes
+// Forward declarations (tipurile complete vin din HLSDK mai tarziu)
+struct edict_s;
+typedef struct edict_s edict_t;
+struct entity_state_s;
+
+// Prototipuri
 void OnAmxxAttach();
 void OnAmxxDetach();
 void ServerDeactivate();
@@ -22,7 +29,7 @@ int AddToFullPack_Post(struct entity_state_s *state, int e, edict_t *ent,
                        edict_t *host, int hostflags, int player,
                        unsigned char *pSet);
 
-// hooks
+// Hook-uri
 #define FN_AMXX_ATTACH        OnAmxxAttach
 #define FN_AMXX_DETACH        OnAmxxDetach
 #define FN_ServerDeactivate   ServerDeactivate
@@ -30,4 +37,4 @@ int AddToFullPack_Post(struct entity_state_s *state, int e, edict_t *ent,
 #define FN_ClientDisconnect   ClientDisconnect
 #define FN_AddToFullPack_Post AddToFullPack_Post
 
-#endif
+#endif // __MODULECONFIG_H__
