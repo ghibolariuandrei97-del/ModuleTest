@@ -42,6 +42,12 @@ jobs:
         run: |
           cmake -A Win32 -B build
           cmake --build build --config Release
+      - name: Show exports and dependencies
+        shell: cmd
+        run: |
+          call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+          dumpbin /exports build\Release\hudsprites_amxx.dll
+          dumpbin /dependents build\Release\hudsprites_amxx.dll
       - uses: actions/upload-artifact@v4
         with:
           name: hudsprites-windows
