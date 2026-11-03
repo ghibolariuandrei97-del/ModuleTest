@@ -10,7 +10,7 @@ CXXFLAGS = -m32 -fPIC -O2 -std=gnu++11 -fno-rtti -fno-exceptions -w -DLINUX
 
 all: $(OUT)
 
-$(OUT): sdk/amxxmodule.cpp mymodule.cpp
+$(OUT): sdk/amxxmodule.cpp hudsprites.cpp
 > $(CXX) $(CXXFLAGS) $(INC) -shared -static-libgcc -static-libstdc++ -o $@ $^ -ldl
 
 clean:
